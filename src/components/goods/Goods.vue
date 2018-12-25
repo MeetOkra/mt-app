@@ -1,7 +1,6 @@
 <template>
   <div class="goods">
     <!--分类列表-->
-    <div @click="scrollToMenuItem(0)" style="width: 20px; height: 20px;background-color: #cdcdcc"></div>
     <div class="menu-wrapper" ref="menuScroll">
       <ul>
         <!-- 专场 -->
@@ -90,7 +89,9 @@
         return "background-image: url(" + url + ")";
       },
       initScroll() {
-        this.menuScroll = new BScroll(this.$refs.menuScroll);
+        this.menuScroll = new BScroll(this.$refs.menuScroll, {
+          click: true
+        });
         this.goodScroll = new BScroll(this.$refs.goodScroll, {
           probeType: 3,
           click: true
@@ -136,7 +137,8 @@
         }
       },
       scrollToMenuItem(index) {
-        console.log(index);
+        this.scrollY = -this.menuHeight[index];
+        this.goodScroll.scrollTo(0, this.scrollY);
       }
     },
     created() {
@@ -169,7 +171,7 @@
     display: flex;
     position: absolute;
     width: 100%;
-    top: 190px;
+    top: 191px;
     bottom: 51px;
     overflow: hidden;
   }
