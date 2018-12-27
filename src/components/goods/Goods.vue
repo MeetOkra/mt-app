@@ -25,6 +25,9 @@
             <img class="icon" :src="item.icon" v-if="item.icon">
             {{item.name}}
           </p>
+          <p v-show="calculateBuyCount(index) > 0" class="tip">
+            {{calculateBuyCount(index)}}
+          </p>
         </li>
       </ul>
     </div>
@@ -42,43 +45,48 @@
           <h3 class="title">{{item.name}}</h3>
           <!-- 具体的商品列表 -->
           <ul>
-            <li v-for="food in item.spus" :key="food.id" class="good-item">
-              <div class="icon" :style="head_bg(food.picture)"></div>
+            <li v-for="good in item.spus" :key="good.id" class="good-item">
+              <div class="icon" :style="head_bg(good.picture)"></div>
               <div class="content">
-                <h3 class="name">{{food.name}}</h3>
-                <p class="desc" v-if="food.description">{{food.description}}</p>
+                <h3 class="name">{{good.name}}</h3>
+                <p class="desc" v-if="good.description">{{good.description}}</p>
                 <div class="extra">
-                  <span class="saled">{{food.month_saled_content}}</span>
-                  <span class="praise">{{food.praise_content}}</span>
+                  <span class="saled">{{good.month_saled_content}}</span>
+                  <span class="praise">{{good.praise_content}}</span>
                 </div>
-                <img class="product" :src="food.product_label_picture" alt="">
+                <img class="product" :src="good.product_label_picture" alt="">
                 <p class="price">
-                  <span class="text">${{food.min_price}}</span>
-                  <span class="unit">/{{food.unit}}</span>
+                  <span class="text">${{good.min_price}}</span>
+                  <span class="unit">/{{good.unit}}</span>
                 </p>
               </div>
-              <!--<div class="cartcontrol-wrapper">
-                <app-cart-control :food="food"></app-cart-control>
-              </div>-->
+              <div class="cart-control-wrapper">
+                <app-cart-control :good="good"></app-cart-control>
+              </div>
             </li>
           </ul>
         </li>
       </ul>
     </div>
+    <!-- 购物车 -->
+    <app-shop-cart :selectGoods="selectGoods" :poiInfo="this.poiInfo"></app-shop-cart>
   </div>
 </template>
 
 <script>
   import BScroll from 'better-scroll';
+  import CardControl from "../cardcontrol/CardControl"
+  import ShopCart from "../shopcart/ShopCart"
 
   export default {
     name: "Goods",
     data() {
       return {
+        poiInfo: {},
         container: {},
         goods: [],
-        menuScroll: {},
-        goodScroll: {},
+        menuScroll: undefined,
+        goodScroll: undefined,
         menuHeight: [],
         scrollY: 0,
         scrollDirection: 1 // 0- up，1-down
@@ -89,13 +97,21 @@
         return "background-image: url(" + url + ")";
       },
       initScroll() {
-        this.menuScroll = new BScroll(this.$refs.menuScroll, {
-          click: true
-        });
-        this.goodScroll = new BScroll(this.$refs.goodScroll, {
-          probeType: 3,
-          click: true
-        })
+        if (this.menuScroll) {
+          this.menuScroll.refresh()
+        } else {
+          this.menuScroll = new BScroll(this.$refs.menuScroll, {
+            click: true
+          })
+        }
+        if (this.goodScroll) {
+          this.goodScroll.refresh()
+        } else {
+          this.goodScroll = new BScroll(this.$refs.goodScroll, {
+            probeType: 3,
+            click: true
+          })
+        }
       },
       calculateHeight() {
         let foodItems = this.$refs.goodScroll.getElementsByClassName("food-list-hook");
@@ -139,6 +155,17 @@
       scrollToMenuItem(index) {
         this.scrollY = -this.menuHeight[index];
         this.goodScroll.scrollTo(0, this.scrollY);
+      },
+      calculateBuyCount(index) {
+        let count = 0;
+        if (this.goods) {
+          this.goods[index].spus.forEach((good) => {
+            if (good.count) {
+              count += good.count;
+            }
+          })
+        }
+        return count;
       }
     },
     created() {
@@ -149,6 +176,7 @@
             console.log(response.data)
             this.container = response.data.container_operation_source;
             this.goods = response.data.food_spu_tags;
+            this.poiInfo = response.data.poi_info;
             // DOM已经更新
             this.$nextTick(() => {
               // 执行滚动方法
@@ -162,6 +190,23 @@
             })
           }
         })
+    },
+    computed: {
+      selectGoods() {
+        let selectResult = []
+        this.goods.forEach(myGoods => {
+          myGoods.spus.forEach(good => {
+            if (good.count > 0) {
+              selectResult.push(good)
+            }
+          })
+        });
+        return selectResult
+      }
+    },
+    components: {
+      "app-cart-control": CardControl,
+      "app-shop-cart": ShopCart
     }
   }
 </script>
@@ -170,10 +215,10 @@
   .goods {
     display: flex;
     position: absolute;
-    width: 100%;
-    top: 191px;
+    top: 190px;
     bottom: 51px;
     overflow: hidden;
+    width: 100%;
   }
 
   /* 菜单样式 */
@@ -186,6 +231,20 @@
     padding: 16px 23px 15px 10px;
     border-bottom: 1px solid #E4E4E4;
     position: relative;
+  }
+
+  .goods .menu-wrapper .menu-item .tip {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    color: white;
+    background: red;
+    text-align: center;
+    font-size: 7px;
+    line-height: 13px;
   }
 
   /* 当前选中 */
@@ -313,5 +372,11 @@
   .goods .goods-wrapper .goods-list .good-item .content .price .unit {
     font-size: 12px;
     color: #BFBFBF;
+  }
+
+  .goods .goods-wrapper .goods-list .good-item .cart-control-wrapper {
+    position: absolute;
+    right: 0;
+    bottom: 0;
   }
 </style>
