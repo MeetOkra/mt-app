@@ -45,7 +45,7 @@
           <h3 class="title">{{item.name}}</h3>
           <!-- 具体的商品列表 -->
           <ul>
-            <li v-for="good in item.spus" :key="good.id" class="good-item">
+            <li v-for="(good, index) in item.spus" :key="index" class="good-item" @click="showGoodDetail(good)">
               <div class="icon" :style="head_bg(good.picture)"></div>
               <div class="content">
                 <h3 class="name">{{good.name}}</h3>
@@ -70,6 +70,7 @@
     </div>
     <!-- 购物车 -->
     <app-shop-cart :selectGoods="selectGoods" :poiInfo="this.poiInfo"></app-shop-cart>
+    <app-good-detail :good="currentGood" ref="goodPage"></app-good-detail>
   </div>
 </template>
 
@@ -77,6 +78,7 @@
   import BScroll from 'better-scroll';
   import CardControl from "../cardcontrol/CardControl"
   import ShopCart from "../shopcart/ShopCart"
+  import GoodDetail from '../gooddetail/GoodDetail'
 
   export default {
     name: "Goods",
@@ -89,7 +91,8 @@
         goodScroll: undefined,
         menuHeight: [],
         scrollY: 0,
-        scrollDirection: 1 // 0- up，1-down
+        scrollDirection: 1, // 0- up，1-down,
+        currentGood: {}
       }
     },
     methods: {
@@ -166,6 +169,10 @@
           })
         }
         return count;
+      },
+      showGoodDetail(good) {
+        this.currentGood = good
+        this.$refs.goodPage.showPage()
       }
     },
     created() {
@@ -206,7 +213,8 @@
     },
     components: {
       "app-cart-control": CardControl,
-      "app-shop-cart": ShopCart
+      "app-shop-cart": ShopCart,
+      "app-good-detail": GoodDetail
     }
   }
 </script>
