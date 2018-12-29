@@ -2,7 +2,7 @@
   <div id="app">
     <app-header :poiInfo="poiInfo"></app-header>
 
-    <app-nav></app-nav>
+    <app-nav :ratingNum="ratingNum"></app-nav>
 
     <keep-alive>
       <router-view></router-view>
@@ -22,15 +22,25 @@
     },
     data() {
       return {
-        poiInfo: {}
+        poiInfo: {},
+        ratingNum: 0
       }
     },
     created() {
       fetch("/api/goods")
         .then(res => res.json())
         .then(response => {
+          console.log(response)
           if (response.code === 0) {
             this.poiInfo = response.data.poi_info;
+          }
+        })
+      fetch("/api/ratings")
+        .then(res => res.json())
+        .then(response => {
+          console.log(response)
+          if (response.code === 0) {
+            this.ratingNum = response.data.comment_num
           }
         })
     }
